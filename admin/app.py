@@ -3,7 +3,7 @@ import uvicorn
 from pathlib import Path
 
 from fastapi import FastAPI, Request, Form, Depends, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from itsdangerous import URLSafeSerializer, BadSignature
@@ -17,6 +17,10 @@ from database.crud import (
     ban_user,
     set_user_plan,
     add_tokens,
+    get_all_payments,
+    get_payment_stats,
+    get_payment_by_external_id,
+    update_payment_status,
 )
 from config import PLANS
 
@@ -185,6 +189,112 @@ async def change_tokens(
     await add_tokens(user_id, amount)
     logger.info(f"Admin added {amount} tokens to user {user_id}")
     return RedirectResponse(url=f"/admin/users/{user_id}", status_code=303)
+
+
+# ---------------------------------------------------------------------------
+# Stripe webhook (automatic payment confirmation)
+# ---------------------------------------------------------------------------
+
+@app.post("/webhooks/stripe")
+async def stripe_webhook(request: Request):
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature", "")
+
+    from payments.stripe_pay import verify_stripe_webhook
+    event = verify_stripe_webhook(payload, sig_header)
+    if event is None:
+        raise HTTPException(status_code=400, detail="Invalid Stripe signature")
+
+    if event["type"] == "checkout.session.completed":
+        session = event["data"]["object"]
+        session_id = session.get("id")
+        metadata = session.get("metadata", {})
+        user_id = metadata.get("user_id")
+        plan = metadata.get("plan")
+
+        if session_id and user_id and plan:
+            if plan not in PLANS:
+                logger.warning(f"Stripe webhook: unknown plan '{plan}' for user {user_id}")
+            else:
+                payment = await get_payment_by_external_id(session_id)
+                if payment and payment.status != "succeeded":
+                    await update_payment_status(payment.id, "succeeded")
+                    await set_user_plan(int(user_id), plan)
+                    logger.info(
+                        f"Stripe webhook: user {user_id} upgraded to {plan} (session {session_id})"
+                    )
+
+    return Response(status_code=200)
+
+
+# ---------------------------------------------------------------------------
+# YooKassa webhook (automatic payment confirmation)
+# ---------------------------------------------------------------------------
+
+@app.post("/webhooks/yookassa")
+async def yookassa_webhook(request: Request):
+    payload = await request.body()
+    # YooKassa sends the IP; signature check uses secret key as HMAC key
+    signature = request.headers.get("Signature", "")
+
+    from payments.yookassa_pay import verify_yookassa_webhook
+    event = verify_yookassa_webhook(payload, signature)
+    if event is None:
+        # Log the failed verification for security monitoring
+        logger.warning(
+            f"YooKassa webhook verification failed from {request.client.host}"
+        )
+        # Accept the request (YooKassa retries otherwise) but do nothing
+        return Response(status_code=200)
+
+    event_type = event.get("event", "")
+    if event_type == "payment.succeeded":
+        payment_obj = event.get("object", {})
+        payment_id = payment_obj.get("id")
+        metadata = payment_obj.get("metadata", {})
+        user_id = metadata.get("user_id")
+        plan = metadata.get("plan")
+
+        if payment_id and user_id and plan:
+            if plan not in PLANS:
+                logger.warning(f"YooKassa webhook: unknown plan '{plan}' for user {user_id}")
+            else:
+                payment = await get_payment_by_external_id(payment_id)
+                if payment and payment.status != "succeeded":
+                    await update_payment_status(payment.id, "succeeded")
+                    await set_user_plan(int(user_id), plan)
+                    logger.info(
+                        f"YooKassa webhook: user {user_id} upgraded to {plan} (payment {payment_id})"
+                    )
+
+    return Response(status_code=200)
+
+
+# ---------------------------------------------------------------------------
+# Payments list
+# ---------------------------------------------------------------------------
+
+@app.get("/admin/payments", response_class=HTMLResponse)
+async def payments_list(
+    request: Request,
+    page: int = 1,
+    _: bool = Depends(get_current_admin),
+):
+    per_page = 20
+    payments, total = await get_all_payments(page=page, per_page=per_page)
+    total_pages = max(1, (total + per_page - 1) // per_page)
+    pay_stats = await get_payment_stats()
+    return templates.TemplateResponse(
+        "payments.html",
+        {
+            "request": request,
+            "payments": payments,
+            "page": page,
+            "total_pages": total_pages,
+            "total": total,
+            "pay_stats": pay_stats,
+        },
+    )
 
 
 # ---------------------------------------------------------------------------

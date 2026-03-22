@@ -18,3 +18,5 @@ loguru==0.7.3
 APScheduler==3.11.0
 pytz==2024.2
 cryptography==46.0.5
+stripe==14.4.1
+yookassa==3.10.0
