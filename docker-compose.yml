@@ -1,0 +1,27 @@
+version: "3.9"
+
+# NOTE: Change the POSTGRES_PASSWORD before deploying to production.
+# Update DATABASE_URL in your .env file to match.
+services:
+  postgres:
+    image: postgres:16
+    container_name: aibot_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: aibot_user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: aibot_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: aibot_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:

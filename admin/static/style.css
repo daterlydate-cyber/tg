@@ -1,0 +1,302 @@
+/* ============================================================
+   AI Bot Admin Panel — Dark Theme CSS
+   ============================================================ */
+
+:root {
+    --bg-primary: #1a1a2e;
+    --bg-secondary: #16213e;
+    --bg-card: #0f3460;
+    --bg-card-light: #1e2a4a;
+    --accent-purple: #7c3aed;
+    --accent-purple-light: #9d5cf0;
+    --accent-purple-soft: rgba(124, 58, 237, 0.15);
+    --text-primary: #e2e8f0;
+    --text-muted: #94a3b8;
+    --border-color: #2d3748;
+    --sidebar-width: 260px;
+    --topbar-height: 60px;
+}
+
+/* ── Base ────────────────────────────────────────────────── */
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ── Layout ──────────────────────────────────────────────── */
+#wrapper {
+    min-height: 100vh;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────── */
+.sidebar {
+    width: var(--sidebar-width);
+    min-height: 100vh;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    transition: width 0.3s ease;
+}
+
+.sidebar-brand {
+    padding: 1.25rem 1.5rem;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--accent-purple-light);
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.sidebar-nav {
+    padding: 1rem 0;
+    flex: 1;
+}
+
+.sidebar-nav .nav-link {
+    display: flex;
+    align-items: center;
+    padding: 0.65rem 1.5rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: all 0.2s;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.sidebar-nav .nav-link:hover {
+    background: var(--accent-purple-soft);
+    color: var(--text-primary);
+}
+
+.sidebar-nav .nav-link.active {
+    background: var(--accent-purple-soft);
+    color: var(--accent-purple-light);
+    border-right: 3px solid var(--accent-purple);
+}
+
+.sidebar-divider {
+    border-color: var(--border-color);
+    margin: 0.5rem 1rem;
+}
+
+/* Collapsed sidebar */
+#wrapper.sidebar-collapsed .sidebar {
+    width: 60px;
+}
+#wrapper.sidebar-collapsed .sidebar-brand span,
+#wrapper.sidebar-collapsed .sidebar-nav .nav-link span,
+#wrapper.sidebar-collapsed .sidebar-brand {
+    font-size: 0;
+}
+
+/* ── Topbar ──────────────────────────────────────────────── */
+.topbar {
+    background: var(--bg-secondary) !important;
+    border-bottom: 1px solid var(--border-color);
+    height: var(--topbar-height);
+}
+
+/* ── Page Content ────────────────────────────────────────── */
+#page-content-wrapper {
+    flex: 1;
+    min-width: 0;
+    overflow-x: hidden;
+}
+
+/* ── Cards ───────────────────────────────────────────────── */
+.card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+}
+
+.card-header {
+    background: var(--bg-card-light);
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600;
+    color: var(--text-primary);
+    padding: 0.85rem 1.25rem;
+}
+
+.card-footer {
+    background: var(--bg-card-light);
+    border-top: 1px solid var(--border-color);
+}
+
+.stat-card:hover {
+    border-color: var(--accent-purple);
+    transform: translateY(-2px);
+    transition: all 0.2s ease;
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* ── Background helpers ──────────────────────────────────── */
+.bg-purple-soft { background: var(--accent-purple-soft); }
+.bg-green-soft  { background: rgba(16, 185, 129, 0.12); }
+.bg-blue-soft   { background: rgba(59, 130, 246, 0.12); }
+.bg-red-soft    { background: rgba(239, 68, 68, 0.12); }
+
+/* ── Color helpers ───────────────────────────────────────── */
+.text-purple { color: var(--accent-purple-light) !important; }
+
+/* ── Buttons ─────────────────────────────────────────────── */
+.btn-purple {
+    background: var(--accent-purple);
+    border-color: var(--accent-purple);
+    color: #fff;
+}
+.btn-purple:hover, .btn-purple:focus {
+    background: var(--accent-purple-light);
+    border-color: var(--accent-purple-light);
+    color: #fff;
+}
+.btn-outline-purple {
+    border-color: var(--accent-purple);
+    color: var(--accent-purple-light);
+}
+.btn-outline-purple:hover {
+    background: var(--accent-purple);
+    color: #fff;
+}
+
+/* ── Tables ──────────────────────────────────────────────── */
+.table-dark {
+    --bs-table-bg: transparent;
+    --bs-table-striped-bg: rgba(255,255,255,0.02);
+    --bs-table-hover-bg: rgba(124, 58, 237, 0.08);
+    --bs-table-border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.table-dark thead th {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* ── Badges / Plan labels ────────────────────────────────── */
+.badge-plan {
+    display: inline-block;
+    padding: 0.3em 0.65em;
+    font-size: 0.75em;
+    font-weight: 600;
+    border-radius: 0.375rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.badge-free     { background: rgba(100,100,100,0.3); color: #cbd5e1; }
+.badge-basic    { background: rgba(59,130,246,0.2);  color: #93c5fd; }
+.badge-premium  { background: rgba(245,158,11,0.2);  color: #fcd34d; }
+.badge-unlimited{ background: rgba(124,58,237,0.3);  color: #c4b5fd; }
+
+/* ── Badges Bootstrap override ───────────────────────────── */
+.bg-purple { background: var(--accent-purple) !important; }
+
+/* ── List group ──────────────────────────────────────────── */
+.list-group-item {
+    background: transparent;
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+/* ── Pagination ──────────────────────────────────────────── */
+.page-link {
+    background: var(--bg-card-light);
+    border-color: var(--border-color);
+    color: var(--text-muted);
+}
+.page-link:hover {
+    background: var(--accent-purple-soft);
+    color: var(--text-primary);
+}
+.page-item.active .page-link {
+    background: var(--accent-purple);
+    border-color: var(--accent-purple);
+    color: #fff;
+}
+
+/* ── Form controls ───────────────────────────────────────── */
+.form-control, .form-select {
+    background: var(--bg-card-light) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+.form-control::placeholder { color: var(--text-muted) !important; }
+.form-control:focus, .form-select:focus {
+    border-color: var(--accent-purple) !important;
+    box-shadow: 0 0 0 0.2rem var(--accent-purple-soft) !important;
+}
+.form-label { color: var(--text-muted); }
+
+/* ── Login page ──────────────────────────────────────────── */
+.login-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: var(--bg-primary);
+}
+.login-container {
+    width: 100%;
+    max-width: 420px;
+    padding: 1rem;
+}
+.login-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+}
+
+/* ── Code elements ───────────────────────────────────────── */
+code {
+    color: var(--accent-purple-light);
+    background: var(--accent-purple-soft);
+    padding: 0.1em 0.35em;
+    border-radius: 0.3em;
+    font-size: 0.9em;
+}
+
+pre {
+    background: var(--bg-card-light);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    font-size: 0.875rem;
+}
+
+/* ── dl rows ─────────────────────────────────────────────── */
+dt { color: var(--text-muted); font-weight: 500; }
+dd { color: var(--text-primary); }
+
+/* ── Scrollbar ───────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-purple); }

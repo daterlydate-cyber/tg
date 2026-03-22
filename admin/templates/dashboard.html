@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Дашборд — AI Bot Admin{% endblock %}
+{% block page_title %}📊 Дашборд{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-purple-soft me-3">
+                        <i class="bi bi-people-fill text-purple fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Пользователей</div>
+                        <div class="stat-value">{{ stats.total_users }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-green-soft me-3">
+                        <i class="bi bi-activity text-success fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Активных сегодня</div>
+                        <div class="stat-value">{{ stats.active_today }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-blue-soft me-3">
+                        <i class="bi bi-chat-dots-fill text-info fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Запросов всего</div>
+                        <div class="stat-value">{{ stats.total_requests | int }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-red-soft me-3">
+                        <i class="bi bi-slash-circle-fill text-danger fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Забанено</div>
+                        <div class="stat-value">{{ stats.banned_users }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Top Models -->
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="bi bi-robot me-2 text-purple"></i>Топ моделей
+            </div>
+            <div class="card-body">
+                {% if stats.top_models %}
+                <ul class="list-group list-group-flush">
+                    {% for item in stats.top_models %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>{{ item.model }}</span>
+                        <span class="badge bg-purple rounded-pill">{{ item.count }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted text-center py-3">Нет данных</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Plan Distribution -->
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="bi bi-pie-chart me-2 text-purple"></i>Тарифы
+            </div>
+            <div class="card-body">
+                {% if stats.plan_distribution %}
+                <ul class="list-group list-group-flush">
+                    {% for item in stats.plan_distribution %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="badge-plan badge-{{ item.plan }}">{{ item.plan }}</span>
+                        <span class="badge bg-secondary rounded-pill">{{ item.count }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted text-center py-3">Нет данных</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Users -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-clock-history me-2 text-purple"></i>Последние пользователи</span>
+        <a href="/admin/users" class="btn btn-sm btn-outline-purple">Все пользователи</a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-dark table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Имя</th>
+                        <th>Username</th>
+                        <th>Тариф</th>
+                        <th>Токенов</th>
+                        <th>Запросов</th>
+                        <th>Последняя активность</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in recent_users %}
+                    <tr onclick="location.href='/admin/users/{{ user.id }}'" style="cursor:pointer">
+                        <td><code>{{ user.id }}</code></td>
+                        <td>{{ user.first_name or '—' }}</td>
+                        <td>{% if user.username %}@{{ user.username }}{% else %}—{% endif %}</td>
+                        <td><span class="badge-plan badge-{{ user.plan }}">{{ user.plan }}</span></td>
+                        <td>{{ "{:,}".format(user.tokens_left) }}</td>
+                        <td>{{ user.total_requests }}</td>
+                        <td>{{ user.last_active.strftime('%d.%m.%Y %H:%M') if user.last_active else '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

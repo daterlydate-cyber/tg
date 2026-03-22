@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Пользователи — AI Bot Admin{% endblock %}
+{% block page_title %}👥 Пользователи{% endblock %}
+
+{% block content %}
+<!-- Search -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="/admin/users" class="d-flex gap-2">
+            <input
+                type="text"
+                name="search"
+                class="form-control bg-dark text-light border-secondary"
+                placeholder="Поиск по ID, имени или username..."
+                value="{{ search }}"
+            >
+            <button type="submit" class="btn btn-purple">
+                <i class="bi bi-search"></i> Найти
+            </button>
+            {% if search %}
+            <a href="/admin/users" class="btn btn-outline-secondary">
+                <i class="bi bi-x"></i> Сбросить
+            </a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- Users Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-people me-2 text-purple"></i>
+            Найдено: <strong>{{ total }}</strong>
+        </span>
+        <span class="text-muted small">Страница {{ page }} из {{ total_pages }}</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-dark table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Имя</th>
+                        <th>Username</th>
+                        <th>Тариф</th>
+                        <th>Токенов</th>
+                        <th>Запросов</th>
+                        <th>Статус</th>
+                        <th>Дата регистрации</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td><code>{{ user.id }}</code></td>
+                        <td>{{ user.first_name or '—' }}</td>
+                        <td>{% if user.username %}@{{ user.username }}{% else %}—{% endif %}</td>
+                        <td><span class="badge-plan badge-{{ user.plan }}">{{ user.plan }}</span></td>
+                        <td>{{ "{:,}".format(user.tokens_left) }}</td>
+                        <td>{{ user.total_requests }}</td>
+                        <td>
+                            {% if user.is_banned %}
+                            <span class="badge bg-danger">🚫 Забанен</span>
+                            {% else %}
+                            <span class="badge bg-success">✅ Активен</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ user.created_at.strftime('%d.%m.%Y') if user.created_at else '—' }}</td>
+                        <td>
+                            <a href="/admin/users/{{ user.id }}" class="btn btn-sm btn-outline-purple">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% if not users %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-4">Пользователи не найдены</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <div class="card-footer">
+        <nav>
+            <ul class="pagination pagination-sm mb-0 justify-content-center">
+                {% if page > 1 %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page - 1 }}{% if search %}&search={{ search }}{% endif %}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                {% for p in range(1, total_pages + 1) %}
+                <li class="page-item {% if p == page %}active{% endif %}">
+                    <a class="page-link" href="?page={{ p }}{% if search %}&search={{ search }}{% endif %}">{{ p }}</a>
+                </li>
+                {% endfor %}
+                {% if page < total_pages %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page + 1 }}{% if search %}&search={{ search }}{% endif %}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Пользователь {{ user.id }} — AI Bot Admin{% endblock %}
+{% block page_title %}👤 Пользователь #{{ user.id }}{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Profile Card -->
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-person-circle me-2 text-purple"></i>Профиль
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5 text-muted">ID:</dt>
+                    <dd class="col-sm-7"><code>{{ user.id }}</code></dd>
+
+                    <dt class="col-sm-5 text-muted">Имя:</dt>
+                    <dd class="col-sm-7">{{ user.first_name or '—' }}</dd>
+
+                    <dt class="col-sm-5 text-muted">Username:</dt>
+                    <dd class="col-sm-7">{% if user.username %}@{{ user.username }}{% else %}—{% endif %}</dd>
+
+                    <dt class="col-sm-5 text-muted">Тариф:</dt>
+                    <dd class="col-sm-7"><span class="badge-plan badge-{{ user.plan }}">{{ user.plan }}</span></dd>
+
+                    <dt class="col-sm-5 text-muted">Токенов:</dt>
+                    <dd class="col-sm-7">{{ "{:,}".format(user.tokens_left) }} / {{ "{:,}".format(user.tokens_total) }}</dd>
+
+                    <dt class="col-sm-5 text-muted">Запросов:</dt>
+                    <dd class="col-sm-7">{{ user.total_requests }}</dd>
+
+                    <dt class="col-sm-5 text-muted">Модель:</dt>
+                    <dd class="col-sm-7 text-truncate">{{ user.selected_model }}</dd>
+
+                    <dt class="col-sm-5 text-muted">Температура:</dt>
+                    <dd class="col-sm-7">{{ user.temperature }}</dd>
+
+                    <dt class="col-sm-5 text-muted">Статус:</dt>
+                    <dd class="col-sm-7">
+                        {% if user.is_banned %}
+                        <span class="badge bg-danger">🚫 Забанен</span>
+                        {% else %}
+                        <span class="badge bg-success">✅ Активен</span>
+                        {% endif %}
+                    </dd>
+
+                    <dt class="col-sm-5 text-muted">Регистрация:</dt>
+                    <dd class="col-sm-7">{{ user.created_at.strftime('%d.%m.%Y %H:%M') if user.created_at else '—' }}</dd>
+
+                    <dt class="col-sm-5 text-muted">Активность:</dt>
+                    <dd class="col-sm-7">{{ user.last_active.strftime('%d.%m.%Y %H:%M') if user.last_active else '—' }}</dd>
+                </dl>
+            </div>
+        </div>
+
+        <!-- Ban button -->
+        <form method="POST" action="/admin/users/{{ user.id }}/ban" class="mb-3">
+            {% if user.is_banned %}
+            <button type="submit" class="btn btn-success w-100">
+                <i class="bi bi-check-circle me-2"></i>Разбанить
+            </button>
+            {% else %}
+            <button type="submit" class="btn btn-danger w-100" onclick="return confirm('Забанить пользователя?')">
+                <i class="bi bi-slash-circle me-2"></i>Забанить
+            </button>
+            {% endif %}
+        </form>
+
+        <a href="/admin/users" class="btn btn-outline-secondary w-100">
+            <i class="bi bi-arrow-left me-2"></i>Назад к списку
+        </a>
+    </div>
+
+    <!-- Actions -->
+    <div class="col-lg-8">
+        <!-- Change Plan -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-tag me-2 text-purple"></i>Изменить тариф
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/admin/users/{{ user.id }}/set_plan" class="d-flex gap-2">
+                    <select name="plan" class="form-select bg-dark text-light border-secondary">
+                        {% for p in plans %}
+                        <option value="{{ p }}" {% if p == user.plan %}selected{% endif %}>{{ p }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-purple">Применить</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Add Tokens -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-coin me-2 text-purple"></i>Добавить токены
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/admin/users/{{ user.id }}/add_tokens" class="d-flex gap-2">
+                    <input
+                        type="number"
+                        name="amount"
+                        class="form-control bg-dark text-light border-secondary"
+                        placeholder="Количество токенов"
+                        min="1"
+                        required
+                    >
+                    <button type="submit" class="btn btn-purple">Добавить</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- System Prompt -->
+        {% if user.system_prompt %}
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-chat-square-text me-2 text-purple"></i>Системный промпт
+            </div>
+            <div class="card-body">
+                <pre class="text-light mb-0" style="white-space: pre-wrap;">{{ user.system_prompt }}</pre>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
