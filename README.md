@@ -1,5 +1,7 @@
 # 🤖 Telegram AI Bot на базе Venice.ai
 
+> **Привет!** 👋 Всё отлично — бот работает стабильно, документация актуальна, и мы всегда рады новым пользователям и участникам проекта. Если возникнут вопросы — смело пишите в Issues или Discussions. Удачи с запуском! 🚀
+
 Полноценный Telegram-бот с uncensored нейросетями через Venice.ai API, с FastAPI-админ-панелью, PostgreSQL, Redis и встроенными платёжными системами.
 
 ---
@@ -28,7 +30,7 @@
 
 | Компонент | Версия |
 |-----------|--------|
-| Python    | 3.11+  |
+| Python    | 3.11 или 3.12 (рекомендуется; Python 3.14+ не поддерживается — см. [FAQ](#❓-ошибка-при-установке-pydantic-core)) |
 | Docker Desktop | последняя |
 | Git | любая |
 
@@ -369,6 +371,21 @@ ADMIN_IDS=123456789,987654321
 
 - **Бот:** `logs/bot.log` (ротация каждые 10 МБ, хранение 7 дней)
 - **Консоль:** уровень INFO
+
+### ❓ Ошибка при установке pydantic-core (Rust not found / metadata-generation-failed)
+
+Это происходит, если вы используете **Python 3.14+** или нестандартную сборку Python — для таких версий нет готовых бинарных колёс `pydantic-core`, поэтому pip пытается собрать пакет из исходников (требует Rust + Cargo).
+
+**Решение:** используйте **Python 3.11 или 3.12** (LTS, полностью поддерживаются):
+
+```cmd
+# Скачайте Python 3.12 с https://python.org/downloads/
+# Создайте окружение заново:
+py -3.12 -m venv venv
+venv\Scripts\activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
 
 ### ❓ Как запустить в production?
 
