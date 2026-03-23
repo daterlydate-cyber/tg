@@ -26,6 +26,29 @@ class Settings(BaseSettings):
     ADMIN_SECRET_KEY: str = Field("changeme", description="Admin panel password")
     ADMIN_PORT: int = Field(8080, description="Admin panel port")
 
+    # YooKassa (CIS payments in RUB)
+    YOOKASSA_SHOP_ID: str = Field("", description="YooKassa shop ID")
+    YOOKASSA_SECRET_KEY: str = Field("", description="YooKassa secret key")
+    YOOKASSA_RETURN_URL: str = Field(
+        "https://t.me/your_bot",
+        description="URL to redirect after YooKassa payment",
+    )
+
+    # Stripe (Europe / USA payments in USD)
+    STRIPE_SECRET_KEY: str = Field("", description="Stripe secret key")
+    STRIPE_WEBHOOK_SECRET: str = Field("", description="Stripe webhook signing secret")
+    STRIPE_SUCCESS_URL: str = Field(
+        "https://t.me/your_bot?start=paid",
+        description="Stripe success redirect URL",
+    )
+    STRIPE_CANCEL_URL: str = Field(
+        "https://t.me/your_bot",
+        description="Stripe cancel redirect URL",
+    )
+
+    # Webhook host (used to build URLs for payment providers)
+    WEBHOOK_HOST: str = Field("", description="Public HTTPS host for webhooks, e.g. https://bot.example.com")
+
     @property
     def admin_ids(self) -> List[int]:
         if not self.ADMIN_IDS:
@@ -99,4 +122,36 @@ UNCENSORED_MODELS: Dict[str, Dict[str, str]] = {
         "description": "Meta Llama 3.2 — лёгкая 3B модель",
         "plan_required": "free",
     },
+}
+
+# ---------------------------------------------------------------------------
+# Payment prices
+# ---------------------------------------------------------------------------
+
+# YooKassa prices in RUB (whole rubles)
+PLAN_PRICES_RUB: Dict[str, int] = {
+    "basic": 399,
+    "premium": 999,
+    "unlimited": 1999,
+}
+
+# Stripe prices in USD cents (e.g. 499 = $4.99)
+PLAN_PRICES_USD: Dict[str, int] = {
+    "basic": 499,
+    "premium": 1499,
+    "unlimited": 2999,
+}
+
+# Telegram Stars (1 star ≈ $0.013 as of 2024)
+PLAN_PRICES_STARS: Dict[str, int] = {
+    "basic": 350,
+    "premium": 1000,
+    "unlimited": 2000,
+}
+
+# Human-readable price strings for the bot UI
+PLAN_PRICE_LABELS: Dict[str, Dict[str, str]] = {
+    "basic": {"rub": "399 ₽", "usd": "$4.99", "stars": "350 ⭐"},
+    "premium": {"rub": "999 ₽", "usd": "$14.99", "stars": "1 000 ⭐"},
+    "unlimited": {"rub": "1 999 ₽", "usd": "$29.99", "stars": "2 000 ⭐"},
 }

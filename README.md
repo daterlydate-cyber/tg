@@ -1,6 +1,6 @@
 # 🤖 Telegram AI Bot на базе Venice.ai
 
-Полноценный Telegram-бот с uncensored нейросетями через Venice.ai API, с FastAPI-админ-панелью, PostgreSQL и Redis.
+Полноценный Telegram-бот с uncensored нейросетями через Venice.ai API, с FastAPI-админ-панелью, PostgreSQL, Redis и встроенными платёжными системами.
 
 ---
 
@@ -19,7 +19,8 @@
 11. [Команды бота](#11-команды-бота)
 12. [Переменные окружения](#12-переменные-окружения)
 13. [Тарифные планы и модели](#13-тарифные-планы-и-модели)
-14. [FAQ](#14-faq)
+14. [Платёжные системы](#14-платёжные-системы)
+15. [FAQ](#15-faq)
 
 ---
 
@@ -170,6 +171,8 @@ python admin/app.py
 | `/account` | Информация об аккаунте (план, токены, модель) |
 | `/clear` | Очистить историю диалога |
 | `/setprompt` | Установить системный промпт для AI |
+| `/buy` | Купить тарифный план (YooKassa / Stripe / Stars) |
+| `/payments` | История платежей |
 
 ### Команды администратора
 
@@ -196,6 +199,14 @@ python admin/app.py
 | `REDIS_URL` | ✅ | URL Redis |
 | `ADMIN_SECRET_KEY` | ✅ | Пароль для входа в веб-панель |
 | `ADMIN_PORT` | ❌ | Порт веб-панели (по умолчанию: 8080) |
+| `WEBHOOK_HOST` | ❌ | Публичный HTTPS-хост для webhooks, напр. `https://bot.example.com` |
+| `YOOKASSA_SHOP_ID` | ❌ | ID магазина YooKassa |
+| `YOOKASSA_SECRET_KEY` | ❌ | Секретный ключ YooKassa |
+| `YOOKASSA_RETURN_URL` | ❌ | URL возврата после оплаты YooKassa |
+| `STRIPE_SECRET_KEY` | ❌ | Секретный ключ Stripe |
+| `STRIPE_WEBHOOK_SECRET` | ❌ | Signing secret для Stripe webhook |
+| `STRIPE_SUCCESS_URL` | ❌ | URL после успешной оплаты Stripe |
+| `STRIPE_CANCEL_URL` | ❌ | URL при отмене оплаты Stripe |
 
 ---
 
@@ -223,7 +234,88 @@ python admin/app.py
 
 ---
 
-## 14. FAQ
+## 14. Платёжные системы
+
+Бот поддерживает три платёжных провайдера. Telegram Stars работают без дополнительной настройки.
+
+### 💳 Цены тарифов
+
+| Тариф | 🇷🇺 YooKassa (₽) | 💳 Stripe (USD) | ⭐ Stars |
+|-------|:---------------:|:--------------:|:-------:|
+| Basic | 399 ₽ | $4.99 | 350 ⭐ |
+| Premium | 999 ₽ | $14.99 | 1 000 ⭐ |
+| Unlimited | 1 999 ₽ | $29.99 | 2 000 ⭐ |
+
+---
+
+### 🇷🇺 YooKassa (СНГ / рублёвые платежи)
+
+1. Зарегистрируйтесь на [yookassa.ru](https://yookassa.ru) и пройдите верификацию.
+2. Создайте магазин и получите **Shop ID** и **Secret Key** в разделе «Интеграция».
+3. Заполните в `.env`:
+   ```env
+   YOOKASSA_SHOP_ID=123456
+   YOOKASSA_SECRET_KEY=test_xxxxxxxxxxxxxxxxxxxx
+   YOOKASSA_RETURN_URL=https://t.me/your_bot
+   ```
+4. Для автоматического подтверждения оплаты настройте webhook в личном кабинете YooKassa:
+   - URL: `https://your-domain.com/webhooks/yookassa`
+   - Событие: `payment.succeeded`
+5. Для тестирования используйте тестовый магазин (ключи начинаются с `test_`).
+
+> **Тест-карта YooKassa:** 4111 1111 1111 1111, любая дата, код 123.
+
+---
+
+### 💳 Stripe (Европа / США / международные карты)
+
+1. Зарегистрируйтесь на [stripe.com](https://stripe.com).
+2. Получите тестовые ключи в разделе **Developers → API keys**.
+3. Заполните в `.env`:
+   ```env
+   STRIPE_SECRET_KEY=sk_test_xxxxxxxxxxxxxxxxxxxx
+   STRIPE_SUCCESS_URL=https://t.me/your_bot?start=paid
+   STRIPE_CANCEL_URL=https://t.me/your_bot
+   ```
+4. Для webhook: в Stripe Dashboard → **Developers → Webhooks → Add endpoint**:
+   - URL: `https://your-domain.com/webhooks/stripe`
+   - Событие: `checkout.session.completed`
+   - Скопируйте **Signing secret** в `STRIPE_WEBHOOK_SECRET`.
+5. Переключитесь на live-ключи в production.
+
+> **Тест-карта Stripe:** 4242 4242 4242 4242, дата 12/34, код 123.
+
+---
+
+### ⭐ Telegram Stars (встроенная оплата Telegram)
+
+Telegram Stars — нативная система оплаты внутри Telegram. **Не требует регистрации у внешних провайдеров**, работает глобально.
+
+1. В `.env` не нужны дополнительные ключи.
+2. Убедитесь, что ваш бот одобрен для приёма Stars (@BotFather → `/mybots` → «Payments»).
+3. Пользователь нажимает «⭐ Telegram Stars» в меню покупки → бот отправляет инвойс → пользователь платит внутри Telegram.
+
+> **Обменный курс (ориентировочно):** 1 Star ≈ $0.013.
+
+---
+
+### 🔗 Webhooks в production
+
+Для автоматического подтверждения платежей (YooKassa и Stripe) необходим публичный HTTPS-сервер:
+
+```bash
+# Пример: запустить ngrok для разработки
+ngrok http 8080
+
+# Укажите полученный URL в WEBHOOK_HOST в .env
+WEBHOOK_HOST=https://xxxx.ngrok.io
+```
+
+В production используйте Nginx + Let's Encrypt или любой облачный хостинг.
+
+---
+
+## 15. FAQ
 
 ### ❓ Ошибка "Cannot connect to database"
 
@@ -301,27 +393,34 @@ nohup python admin/app.py > /dev/null 2>&1 &
 │   │   ├── start.py             # /start, /help, /account, /clear
 │   │   ├── chat.py              # Основной чат с AI
 │   │   ├── settings.py          # Настройки пользователя
-│   │   └── admin.py             # Команды администратора
+│   │   ├── admin.py             # Команды администратора
+│   │   └── payment.py           # /buy, /payments, оплата тарифов
 │   ├── middlewares/
 │   │   └── auth.py              # Проверка бана, rate limiting
 │   └── keyboards/
 │       ├── main_kb.py           # Главное меню
 │       ├── models_kb.py         # Выбор модели
-│       └── settings_kb.py       # Меню настроек
+│       ├── settings_kb.py       # Меню настроек
+│       └── payment_kb.py        # Кнопки выбора тарифа и способа оплаты
 ├── api/
 │   └── venice.py                # Интеграция Venice.ai API
+├── payments/
+│   ├── __init__.py
+│   ├── yookassa_pay.py          # YooKassa (СНГ / RUB)
+│   ├── stripe_pay.py            # Stripe (Европа / США / USD)
+│   └── telegram_stars.py        # Telegram Stars (глобально)
 ├── admin/
-│   ├── app.py                   # FastAPI админ-панель
+│   ├── app.py                   # FastAPI админ-панель + webhooks
 │   ├── templates/               # HTML шаблоны (тёмная тема)
 │   └── static/style.css         # CSS стили
 ├── database/
 │   ├── db.py                    # SQLAlchemy engine
-│   ├── models.py                # ORM модели
+│   ├── models.py                # ORM модели (User, Conversation, Payment, …)
 │   └── crud.py                  # CRUD операции
 ├── alembic/
 │   ├── env.py                   # Конфигурация Alembic
 │   └── versions/                # Миграции
-├── config.py                    # Конфигурация, планы, модели
+├── config.py                    # Конфигурация, планы, модели, цены
 ├── requirements.txt
 ├── .env.example
 ├── alembic.ini

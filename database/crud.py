@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import PLANS
 from database.db import async_session_maker
-from database.models import BroadcastMessage, Conversation, User
+from database.models import BroadcastMessage, Conversation, User, Payment
 
 
 # ---------------------------------------------------------------------------
@@ -286,3 +286,105 @@ async def get_all_user_ids() -> List[int]:
             select(User.id).where(User.is_banned.is_(False))
         )
         return [row[0] for row in result]
+
+
+# ---------------------------------------------------------------------------
+# Payment CRUD
+# ---------------------------------------------------------------------------
+
+async def create_payment(
+    user_id: int,
+    plan: str,
+    provider: str,
+    amount: int,
+    currency: str,
+    external_id: Optional[str] = None,
+) -> Payment:
+    async with async_session_maker() as session:
+        payment = Payment(
+            user_id=user_id,
+            plan=plan,
+            provider=provider,
+            amount=amount,
+            currency=currency,
+            external_id=external_id,
+            status="pending",
+        )
+        session.add(payment)
+        await session.commit()
+        await session.refresh(payment)
+        return payment
+
+
+async def get_payment_by_external_id(external_id: str) -> Optional[Payment]:
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(Payment).where(Payment.external_id == external_id)
+        )
+        return result.scalar_one_or_none()
+
+
+async def update_payment_status(payment_id: int, status: str) -> None:
+    async with async_session_maker() as session:
+        await session.execute(
+            update(Payment).where(Payment.id == payment_id).values(status=status)
+        )
+        await session.commit()
+
+
+async def get_user_payments(user_id: int, limit: int = 10) -> List[Payment]:
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(Payment)
+            .where(Payment.user_id == user_id)
+            .order_by(Payment.created_at.desc())
+            .limit(limit)
+        )
+        return list(result.scalars().all())
+
+
+async def get_all_payments(
+    page: int = 1,
+    per_page: int = 20,
+) -> Tuple[List[Payment], int]:
+    async with async_session_maker() as session:
+        count_result = await session.execute(select(func.count(Payment.id)))
+        total = count_result.scalar_one()
+
+        result = await session.execute(
+            select(Payment)
+            .order_by(Payment.created_at.desc())
+            .offset((page - 1) * per_page)
+            .limit(per_page)
+        )
+        return list(result.scalars().all()), total
+
+
+async def get_payment_stats() -> dict:
+    async with async_session_maker() as session:
+        total = (await session.execute(select(func.count(Payment.id)))).scalar_one()
+        succeeded = (
+            await session.execute(
+                select(func.count(Payment.id)).where(Payment.status == "succeeded")
+            )
+        ).scalar_one()
+        pending = (
+            await session.execute(
+                select(func.count(Payment.id)).where(Payment.status == "pending")
+            )
+        ).scalar_one()
+
+        # Revenue by currency
+        rev_result = await session.execute(
+            select(Payment.currency, func.sum(Payment.amount))
+            .where(Payment.status == "succeeded")
+            .group_by(Payment.currency)
+        )
+        revenue = {row[0]: row[1] or 0 for row in rev_result}
+
+        return {
+            "total": total,
+            "succeeded": succeeded,
+            "pending": pending,
+            "revenue": revenue,
+        }

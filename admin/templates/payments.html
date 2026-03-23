@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Платежи — AI Bot Admin{% endblock %}
+{% block page_title %}💳 Платежи{% endblock %}
+
+{% block content %}
+<!-- Stats cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-icon"><i class="bi bi-receipt"></i></div>
+                <div class="stat-value">{{ pay_stats.total }}</div>
+                <div class="stat-label">Всего транзакций</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-icon text-success"><i class="bi bi-check-circle"></i></div>
+                <div class="stat-value">{{ pay_stats.succeeded }}</div>
+                <div class="stat-label">Успешных</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-icon text-warning"><i class="bi bi-hourglass-split"></i></div>
+                <div class="stat-value">{{ pay_stats.pending }}</div>
+                <div class="stat-label">Ожидают оплаты</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-icon text-info"><i class="bi bi-cash-stack"></i></div>
+                <div class="stat-value">
+                    {% for currency, amount in pay_stats.revenue.items() %}
+                        {% if currency == "RUB" %}{{ amount }} ₽{% endif %}
+                        {% if currency == "USD" %}${{ "%.2f"|format(amount / 100) }}{% endif %}
+                        {% if currency == "XTR" %}{{ amount }} ⭐{% endif %}
+                    {% endfor %}
+                </div>
+                <div class="stat-label">Выручка</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payments Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-credit-card me-2 text-purple"></i>
+            Всего: <strong>{{ total }}</strong>
+        </span>
+        <span class="text-muted small">Страница {{ page }} из {{ total_pages }}</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-dark table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Пользователь</th>
+                        <th>Тариф</th>
+                        <th>Провайдер</th>
+                        <th>Сумма</th>
+                        <th>Статус</th>
+                        <th>Дата</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in payments %}
+                    <tr>
+                        <td><code>{{ p.id }}</code></td>
+                        <td>
+                            <a href="/admin/users/{{ p.user_id }}" class="text-purple">
+                                {{ p.user_id }}
+                            </a>
+                        </td>
+                        <td><span class="badge-plan badge-{{ p.plan }}">{{ p.plan }}</span></td>
+                        <td>
+                            {% if p.provider == "yookassa" %}
+                                <span class="badge bg-secondary">🏦 YooKassa</span>
+                            {% elif p.provider == "stripe" %}
+                                <span class="badge bg-primary">💳 Stripe</span>
+                            {% elif p.provider == "stars" %}
+                                <span class="badge bg-warning text-dark">⭐ Stars</span>
+                            {% else %}
+                                {{ p.provider }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ p.amount }}
+                            {% if p.currency == "RUB" %}₽
+                            {% elif p.currency == "USD" %}¢ (USD)
+                            {% elif p.currency == "XTR" %}⭐
+                            {% else %}{{ p.currency }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if p.status == "succeeded" %}
+                                <span class="badge bg-success">✅ Успешно</span>
+                            {% elif p.status == "pending" %}
+                                <span class="badge bg-warning text-dark">⏳ Ожидание</span>
+                            {% elif p.status == "failed" %}
+                                <span class="badge bg-danger">❌ Ошибка</span>
+                            {% elif p.status == "cancelled" %}
+                                <span class="badge bg-secondary">🚫 Отменён</span>
+                            {% else %}
+                                {{ p.status }}
+                            {% endif %}
+                        </td>
+                        <td class="text-muted small">
+                            {% if p.created_at %}
+                                {{ p.created_at.strftime("%d.%m.%Y %H:%M") }}
+                            {% else %}—{% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">Платежей нет</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% if total_pages > 1 %}
+    <div class="card-footer">
+        <nav>
+            <ul class="pagination pagination-sm mb-0 justify-content-center">
+                {% if page > 1 %}
+                <li class="page-item">
+                    <a class="page-link bg-dark border-secondary text-light" href="?page={{ page - 1 }}">‹</a>
+                </li>
+                {% endif %}
+                {% for p_num in range(1, total_pages + 1) %}
+                <li class="page-item {% if p_num == page %}active{% endif %}">
+                    <a class="page-link bg-dark border-secondary text-light" href="?page={{ p_num }}">{{ p_num }}</a>
+                </li>
+                {% endfor %}
+                {% if page < total_pages %}
+                <li class="page-item">
+                    <a class="page-link bg-dark border-secondary text-light" href="?page={{ page + 1 }}">›</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

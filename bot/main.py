@@ -10,6 +10,7 @@ from aiogram.enums import ParseMode
 from config import settings
 from database.db import engine, Base
 from bot.handlers import start, chat, settings as settings_handler, admin
+from bot.handlers import payment as payment_handler
 from bot.middlewares.auth import AuthMiddleware
 
 
@@ -41,6 +42,7 @@ async def main() -> None:
     dp.include_router(start.router)
     dp.include_router(settings_handler.router)
     dp.include_router(admin.router)
+    dp.include_router(payment_handler.router)
     dp.include_router(chat.router)  # catch-all last
 
     await on_startup(bot)

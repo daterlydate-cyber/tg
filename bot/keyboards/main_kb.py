@@ -12,4 +12,7 @@ def main_keyboard() -> InlineKeyboardMarkup:
         InlineKeyboardButton(text="📊 Мой аккаунт", callback_data="my_account"),
         InlineKeyboardButton(text="🗑 Очистить историю", callback_data="clear_history"),
     )
+    builder.row(
+        InlineKeyboardButton(text="💎 Купить тариф", callback_data="show_plans"),
+    )
     return builder.as_markup()
