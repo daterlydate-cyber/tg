@@ -28,7 +28,7 @@
 
 | Компонент | Версия |
 |-----------|--------|
-| Python    | 3.11+  |
+| Python    | 3.11 – 3.14  |
 | Docker Desktop | последняя |
 | Git | любая |
 
@@ -63,7 +63,7 @@ source venv/bin/activate
 ## 4. Установка зависимостей
 
 ```bash
-pip install --upgrade pip
+pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
 ```
 
@@ -72,7 +72,11 @@ pip install -r requirements.txt
 ## 5. Настройка переменных окружения
 
 ```bash
+# Linux / macOS
 cp .env.example .env
+
+# Windows
+copy .env.example .env
 ```
 
 Откройте `.env` и заполните все переменные (подробнее в разделе [12](#12-переменные-окружения)):
@@ -316,6 +320,28 @@ WEBHOOK_HOST=https://xxxx.ngrok.io
 ---
 
 ## 15. FAQ
+
+### ❓ Ошибка "metadata-generation-failed" / "Rust not found" при установке зависимостей
+
+Эта ошибка возникает, когда pip пытается собрать пакет `pydantic-core` из исходников вместо использования готового бинарного колеса (wheel). Причина — устаревшая версия pip.
+
+1. Обновите pip, setuptools и wheel до актуальных версий **перед** установкой зависимостей:
+   ```cmd
+   python -m pip install --upgrade pip setuptools wheel
+   python -m pip install -r requirements.txt
+   ```
+2. Убедитесь, что используете Python 3.11, 3.12, 3.13 или 3.14:
+   ```cmd
+   python --version
+   ```
+3. Если ошибка всё равно появляется — удалите venv и пересоздайте с нуля:
+   ```cmd
+   rmdir /s /q venv
+   python -m venv venv
+   venv\Scripts\activate
+   python -m pip install --upgrade pip setuptools wheel
+   python -m pip install -r requirements.txt
+   ```
 
 ### ❓ Ошибка "Cannot connect to database"
 
